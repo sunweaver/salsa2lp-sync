@@ -11,9 +11,13 @@
 
  - Can only be run on a Debian-based system
  - Copy `LomiriForUbuntu.py` to a location of your choice
- - Set `TEMP_PATH` and `CREDENTIALS_PATH` to suit your system
+ - Set `TEMP_PATH` and `CREDENTIALS_PATH` inside the script to suit your system
 
 ## Usage
+
+You must call the script manually the first time. It will give you a
+Launchpad link, which you need to open in a browser to grant it access
+(not necessarily on the same system).
 
 Calling the script without arguments will go through all projects on
 https://salsa.debian.org/ubports-team.
@@ -25,4 +29,7 @@ particular project. For example:
 ./LomiriForUbuntu.py lomiri-api
 ```
 
+## Misc
 
+There is no error handling at this stage. We want the script to crash
+spectacularly to get as much error info as possible.

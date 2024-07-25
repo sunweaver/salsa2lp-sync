@@ -21,9 +21,6 @@
 #
 #
 
-TEMP_PATH = "/home/tari/Desktop/tmp/LomiriForUbuntu"
-CREDENTIALS_PATH = "/home/tari/Desktop/.LomiriForUbuntu.txt"
-
 from datetime import datetime, timedelta, timezone
 from git import Repo
 from launchpadlib.credentials import AccessToken
@@ -87,14 +84,15 @@ if __name__ == '__main__':
             lPackages.append (pProject.name)
         #~Get all projects from Salsa
 
-    pTempPath = pathlib.Path (TEMP_PATH)
+    sHome = pathlib.Path.home ()
+    pTempPath = pathlib.Path (sHome, "LomiriForUbuntu/tmp")
     pTempPath.mkdir (parents=True, exist_ok=True)
     pCredentials = Credentials ("LomiriForUbuntu")
-    pCredentialsPath = pathlib.Path (CREDENTIALS_PATH)
+    pCredentialsPath = pathlib.Path (sHome, "LomiriForUbuntu/Credentials.txt")
 
     if pCredentialsPath.is_file ():
 
-        pFile = open (CREDENTIALS_PATH)
+        pFile = open (pCredentialsPath)
         pCredentials.load (pFile)
         pFile.close ()
 
@@ -108,7 +106,7 @@ if __name__ == '__main__':
 
             try:
                 pCredentials.exchange_request_token_for_access_token (web_root="production")
-                pFile = open (CREDENTIALS_PATH, 'w')
+                pFile = open (pCredentialsPath, 'w')
                 pCredentials.save (pFile)
                 pFile.close ()
                 bComplete = True
@@ -122,7 +120,7 @@ if __name__ == '__main__':
 
                 sleep (1)
 
-    pLaunchpad = Launchpad.login_with ("LomiriForUbuntu", "production", credentials_file=CREDENTIALS_PATH, version="devel")
+    pLaunchpad = Launchpad.login_with ("LomiriForUbuntu", "production", credentials_file=pCredentialsPath, version="devel")
     pGroup = pLaunchpad.people["lomiri"]
 
     for sPackage in lPackages:
@@ -145,7 +143,7 @@ if __name__ == '__main__':
         pExpires = pNow + timedelta (seconds=3600)
         sExpires = pExpires.isoformat ()
         sAccessToken = pRepository.issueAccessToken (description=f"Access token for {pLaunchpad.me.name}", scopes=["repository:push", "repository:pull"], date_expires=sExpires)
-        pRepo = Repo.init (TEMP_PATH)
+        pRepo = Repo.init (pTempPath)
         pMain = pRepo.create_remote ("main", url=f"https://{pLaunchpad.me.name}:{sAccessToken}@git.launchpad.net/~lomiri/+git/{sPackage}")
 
         if not bNewRepo:
@@ -157,7 +155,7 @@ if __name__ == '__main__':
         #~Create a new repository or pull the code from Launchpad
 
         # Get the Debian folder
-        pSalsaPath = pathlib.Path (TEMP_PATH, "salsa")
+        pSalsaPath = pathlib.Path (pTempPath, "salsa")
         Repo.clone_from (f"https://salsa.debian.org/ubports-team/{sPackage}.git", pSalsaPath)
         #~Get the Debian folder
 
@@ -186,7 +184,7 @@ if __name__ == '__main__':
 
                 pMemberPath = pathlib.Path (pMember.name)
                 pMember.name = pMemberPath.relative_to (pToplevelPath)
-                pTarFile.extract (pMember, TEMP_PATH, filter="fully_trusted")
+                pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
         #~Extract the tarball
 
         # Remove the Salsa folder

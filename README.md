@@ -10,7 +10,7 @@
 ## Setup
 
  - Can only be run on a Debian-based system
- - Copy `LomiriForUbuntu.py` to a location of your choice
+ - Copy `salsa2lp-sync.py` to a location of your choice
 
 ## Usage
 
@@ -19,7 +19,7 @@ Launchpad link, which you need to open in a browser to grant it access
 (not necessarily on the same system). Select "**Change Anything**" for
 the access level.
 
-Your credentials will be stored in `~/LomiriForUbuntu/Credentials.txt`.
+Your credentials will be stored in `~/salsa2lp-sync/Credentials.txt`.
 
 Calling the script without arguments will go through all projects on
 https://salsa.debian.org/ubports-team.
@@ -28,7 +28,7 @@ Calling the script with a project argument will process only that
 particular project. For example:
 
 ```
-./LomiriForUbuntu.py lomiri-api
+./salsa2lp-sync.py lomiri-api
 ```
 
 ## Misc

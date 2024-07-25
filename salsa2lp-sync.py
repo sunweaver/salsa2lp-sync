@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  LomiriForUbuntu.py
+#  salsa2lp-sync.py
 #
 #  Copyright 2024 Robert Tari <robert@tari.in>
 #
@@ -85,10 +85,10 @@ if __name__ == '__main__':
         #~Get all projects from Salsa
 
     sHome = pathlib.Path.home ()
-    pTempPath = pathlib.Path (sHome, "LomiriForUbuntu/tmp")
+    pTempPath = pathlib.Path (sHome, "salsa2lp-sync/tmp")
     pTempPath.mkdir (parents=True, exist_ok=True)
-    pCredentials = Credentials ("LomiriForUbuntu")
-    pCredentialsPath = pathlib.Path (sHome, "LomiriForUbuntu/Credentials.txt")
+    pCredentials = Credentials ("salsa2lp-sync")
+    pCredentialsPath = pathlib.Path (sHome, "salsa2lp-sync/Credentials.txt")
 
     if pCredentialsPath.is_file ():
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
                 sleep (1)
 
-    pLaunchpad = Launchpad.login_with ("LomiriForUbuntu", "production", credentials_file=pCredentialsPath, version="devel")
+    pLaunchpad = Launchpad.login_with ("salsa2lp-sync", "production", credentials_file=pCredentialsPath, version="devel")
     pGroup = pLaunchpad.people["lomiri"]
 
     for sPackage in lPackages:

@@ -34,6 +34,7 @@ from lazr.restfulclient.errors import HTTPError
 from time import sleep
 import gitlab
 import pathlib
+import shutil
 import subprocess
 import signal
 import sys
@@ -44,19 +45,17 @@ def onSignal (pSignal, pFrame):
     print ("\nAborting...\n")
     sys.exit (0)
 
-def cleanUp (pTempPath):
+def cleanUp (pPath):
 
-    for sRoot, lDirs, lFiles in pTempPath.walk (top_down=False):
+    for pChild in pPath.iterdir ():
 
-        for sName in lFiles:
+        if pChild.is_dir ():
 
-            pTempFilePath = pathlib.Path (sRoot, sName)
-            pTempFilePath.unlink ()
+            shutil.rmtree (pChild)
 
-        for sName in lDirs:
+        else:
 
-            pTempDirPath = pathlib.Path (sRoot, sName)
-            pTempDirPath.rmdir ()
+            pChild.unlink ()
 
 if __name__ == '__main__':
 

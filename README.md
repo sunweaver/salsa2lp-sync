@@ -16,8 +16,10 @@
 
 You must call the script manually the first time. It will give you a
 Launchpad link, which you need to open in a browser to grant it access
-(not necessarily on the same system). Your credentials will be stored in
-`~/LomiriForUbuntu/Credentials.txt`
+(not necessarily on the same system). Select "**Change Anything**" for
+the access level.
+
+Your credentials will be stored in `~/LomiriForUbuntu/Credentials.txt`.
 
 Calling the script without arguments will go through all projects on
 https://salsa.debian.org/ubports-team.

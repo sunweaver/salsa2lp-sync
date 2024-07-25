@@ -172,10 +172,22 @@ if __name__ == '__main__':
         #~Download the tarball
 
         # Extract the tarball
-        pTarPath = pSalsaPath.glob ("*.tar.bz2")
-        sTarPath = list (pTarPath)[0]
+        lSuffixes = ["xz", "bz2", "gz"]
+        sCompression = None
+        sTarPath = None
 
-        with tarfile.open (sTarPath, "r:bz2") as pTarFile:
+        for sSuffix in lSuffixes:
+
+            lTarPaths = list (pSalsaPath.glob (f"*.tar.{sSuffix}"))
+
+            if lTarPaths:
+
+                sTarPath = lTarPaths[0]
+                sCompression = sSuffix
+
+                break
+
+        with tarfile.open (sTarPath, f"r:{sCompression}") as pTarFile:
 
             lMembers = pTarFile.getmembers ()
             pToplevelPath = pathlib.Path (lMembers[0].name).parts[0]

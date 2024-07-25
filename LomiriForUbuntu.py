@@ -61,10 +61,19 @@ if __name__ == '__main__':
 
     signal.signal (signal.SIGINT, onSignal)
     lPackages = []
+    lArgs = sys.argv[1:]
 
-    if sys.argv[1:]:
+    if lArgs:
 
-        lPackages.append (sys.argv[1:][0])
+        if lArgs[0] in ["-h", "--help"]:
+
+            print ("\nYou must call the script manually the first time. It will give you a Launchpad link, which you need to open in a browser to grant it access (not necessarily on the same system). Select 'Change Anything' for the access level.\n\nCalling the script without arguments will go through all projects on https://salsa.debian.org/ubports-team.\nCalling the script with a project argument will process only that particular project.\n")
+
+            exit (0)
+
+        else:
+
+            lPackages.append (lArgs[0])
 
     else:
 

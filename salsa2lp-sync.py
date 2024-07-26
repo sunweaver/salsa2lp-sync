@@ -85,10 +85,12 @@ if __name__ == '__main__':
         #~Get all projects from Salsa
 
     sHome = pathlib.Path.home ()
-    pTempPath = pathlib.Path (sHome, "salsa2lp-sync/tmp")
+    pTempPath = pathlib.Path (sHome, ".cache/salsa2lp-sync")
     pTempPath.mkdir (parents=True, exist_ok=True)
     pCredentials = Credentials ("salsa2lp-sync")
-    pCredentialsPath = pathlib.Path (sHome, "salsa2lp-sync/Credentials.txt")
+    pCredentialsDirPath = pathlib.Path (sHome, ".config/salsa2lp-sync")
+    pCredentialsDirPath.mkdir (parents=True, exist_ok=True)
+    pCredentialsPath = pathlib.Path (pCredentialsDirPath, "Credentials.txt")
 
     if pCredentialsPath.is_file ():
 

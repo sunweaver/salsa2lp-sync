@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
                 if not bUrlShown:
 
-                    print (sToken)
+                    print ("\n{sToken}\n")
                     bUrlShown = True
 
                 sleep (1)
@@ -134,7 +134,15 @@ if __name__ == '__main__':
 
         # Get the Debian folder
         pSalsaPath = pathlib.Path (pTempPath, "salsa")
-        Repo.clone_from (f"https://salsa.debian.org/ubports-team/{sPackage}.git", pSalsaPath)
+
+        try:
+
+            Repo.clone_from (f"https://salsa.debian.org/ubports-team/{sPackage}.git", pSalsaPath)
+
+        except:
+
+            print (f"\nPanic: {sPackage} not found on Salsa\n")
+            exit (1)
         #~Get the Debian folder
 
         # Download the tarball

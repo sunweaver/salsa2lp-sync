@@ -196,7 +196,14 @@ if __name__ == '__main__':
 
                 pMemberPath = pathlib.Path (pMember.name)
                 pMember.name = pMemberPath.relative_to (pToplevelPath)
-                pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
+
+                if sys.version_info >= (3, 12):
+
+                    pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
+
+                else:
+
+                    pTarFile.extract (pMember, pTempPath)
         #~Extract the tarball
 
         # Remove the Salsa folder

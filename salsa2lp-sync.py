@@ -137,13 +137,29 @@ if __name__ == '__main__':
         #~Get the Debian folder
 
         # Download the tarball
+        lDebianFiles = ["rules", "changelog", "control"]
+        bMissing = False
+
+        for sDebianFile in lDebianFiles:
+
+            pDebianFilePath = pathlib.Path (pSalsaPath, "debian", sDebianFile)
+
+            if not pDebianFilePath.is_file:
+
+                print (f"\nPanic: {sPackage} is missing 'debian/{pDebianFilePath}'\n")
+                bMissing = True
+
+        if bMissing:
+
+            continue
+
         try:
 
             subprocess.run ("uscan --noconf --rename --download-current-version --destdir=. 1> /dev/null", shell=True, cwd=pSalsaPath, check=True)
 
         except subprocess.CalledProcessError as pException:
 
-            print (f"\nPanic while calling 'uscan' for {sPackage}:\n{pException}\n")
+            print (f"\nPanic: Failed calling 'uscan' for {sPackage}:\n{pException}\n")
 
             continue
         #~Download the tarball

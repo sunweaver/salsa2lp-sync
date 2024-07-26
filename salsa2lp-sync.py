@@ -31,6 +31,7 @@ from lazr.restfulclient.errors import HTTPError
 from time import sleep
 import gitlab
 import pathlib
+import re
 import shutil
 import subprocess
 import signal
@@ -164,6 +165,33 @@ if __name__ == '__main__':
             continue
         #~Download the tarball
 
+        # Get the package version
+        pChangelogPath = pathlib.Path (pSalsaPath, "debian/changelog")
+        sVersion = None
+        pFile = pChangelogPath.open ()
+        sLine = pFile.readline ()
+        pFile.close ()
+        pMatch = re.search (r"^[a-zA-Z0-9\-]+ \((?P<version>[a-zA-Z0-9_\~\+\-\.]+)\) (?P<distribution>unstable|UNRELEASED);", sLine)
+
+        if (pMatch):
+
+            sVersion = pMatch.group ("version")
+            sDistribution = pMatch.group ("distribution")
+
+            if sDistribution == "UNRELEASED":
+
+                sVersion += "~"
+
+            else:
+
+                sVersion += "+"
+
+        else:
+
+            print (f"\nPanic: Failed parsing changelog for {sPackage}: {sLine}\n")
+            exit (1)
+        #~Get the package version
+
         # Create a new repository or pull the code from Launchpad
         pRepository = pLaunchpad.git_repositories.getByPath (path=f"~lomiri/+git/{sPackage}")
         bNewRepo = False
@@ -258,7 +286,7 @@ if __name__ == '__main__':
                 if not pRecipe:
 
                     print (f"{sPackage}: Creating build recipe {sRecipe}")
-                    pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {sPackage}", distroseries=pDistroseries, name=sRecipe, recipe_text="# git-build-recipe format 0.4 deb-version {debupstream}-{revtime}\nlp:~lomiri/+git/" + sPackage + " main")
+                    pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {sPackage}", distroseries=pDistroseries, name=sRecipe, recipe_text="# git-build-recipe format 0.4 deb-version {debversion}-{revtime}\nlp:~lomiri/+git/" + sPackage + " main")
         #~Create build recipes (multiple distro series)
         """
 
@@ -270,7 +298,7 @@ if __name__ == '__main__':
             print (f"{sPackage}: Creating build recipe")
             pArchive = pGroup.getPPAByName (name="builds")
             pDistroseries = pLaunchpad.distributions["ubuntu"].getSeries (name_or_version="24.04")
-            pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {sPackage}", distroseries=pDistroseries, name=sPackage, recipe_text="# git-build-recipe format 0.4 deb-version {debupstream}-{revtime}\nlp:~lomiri/+git/" + sPackage + " main")
+            pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {sPackage}", distroseries=pDistroseries, name=sPackage, recipe_text="# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + sPackage + " main")
         #~Create build recipe (one distro series)
 
     # Clean up

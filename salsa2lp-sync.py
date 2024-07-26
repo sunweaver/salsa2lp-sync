@@ -131,6 +131,23 @@ if __name__ == '__main__':
         cleanUp (pTempPath)
         #~Clean up
 
+        # Get the Debian folder
+        pSalsaPath = pathlib.Path (pTempPath, "salsa")
+        Repo.clone_from (f"https://salsa.debian.org/ubports-team/{sPackage}.git", pSalsaPath)
+        #~Get the Debian folder
+
+        # Download the tarball
+        try:
+
+            subprocess.run ("uscan --noconf --rename --download-current-version --destdir=. 1> /dev/null", shell=True, cwd=pSalsaPath, check=True)
+
+        except subprocess.CalledProcessError as pException:
+
+            print (f"\nPanic while calling 'uscan' for {sPackage}:\n{pException}\n")
+
+            continue
+        #~Download the tarball
+
         # Create a new repository or pull the code from Launchpad
         pRepository = pLaunchpad.git_repositories.getByPath (path=f"~lomiri/+git/{sPackage}")
         bNewRepo = False
@@ -155,23 +172,6 @@ if __name__ == '__main__':
             pRepo.heads.main.checkout ()
             pMain.pull ("main:main")
         #~Create a new repository or pull the code from Launchpad
-
-        # Get the Debian folder
-        pSalsaPath = pathlib.Path (pTempPath, "salsa")
-        Repo.clone_from (f"https://salsa.debian.org/ubports-team/{sPackage}.git", pSalsaPath)
-        #~Get the Debian folder
-
-        # Download the tarball
-        try:
-
-            subprocess.run ("uscan --noconf --rename --download-current-version --destdir=. 1> /dev/null", shell=True, cwd=pSalsaPath, check=True)
-
-        except subprocess.CalledProcessError as pException:
-
-            print (pException)
-
-            sys.exit (1)
-        #~Download the tarball
 
         # Extract the tarball
         lSuffixes = ["xz", "bz2", "gz"]

@@ -285,6 +285,10 @@ if __name__ == '__main__':
                 pMemberPath = pathlib.Path (pMember.name)
                 pMember.name = pMemberPath.relative_to (pToplevelPath)
 
+                if pMember.name == "debian" or (pMember.name.parts and pMember.name.parts[0] == "debian"):
+
+                    continue
+
                 if sys.version_info >= (3, 12):
 
                     pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
@@ -294,10 +298,13 @@ if __name__ == '__main__':
                     pTarFile.extract (pMember, pTempPath)
         #~Extract the tarball
 
-        # Remove the Salsa folder
+        # Move debian and remove the Salsa folder
+        pOldDebianPath = pathlib.Path (pSalsaPath, "debian")
+        pNewDebianPath = pathlib.Path (pTempPath, "debian")
+        pOldDebianPath.rename (pNewDebianPath)
         cleanUp (pSalsaPath, [])
         pSalsaPath.rmdir ()
-        #~Remove the Salsa folder
+        #~Move debian and remove the Salsa folder
 
         # Push the changes to Launchpad
         if bNewRepo or pRepo.is_dirty ():

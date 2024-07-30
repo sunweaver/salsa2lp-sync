@@ -60,18 +60,40 @@ if __name__ == '__main__':
     signal.signal (signal.SIGINT, onSignal)
     lPackages = []
     lArgs = sys.argv[1:]
+    sHome = pathlib.Path.home ()
+    pTempPath = pathlib.Path (sHome, ".cache/salsa2lp-sync")
+    pTempPath.mkdir (parents=True, exist_ok=True)
+    pCredentials = Credentials ("salsa2lp-sync")
+    pConfigDirPath = pathlib.Path (sHome, ".config/salsa2lp-sync")
+    pConfigDirPath.mkdir (parents=True, exist_ok=True)
+    pCredentialsPath = pathlib.Path (pConfigDirPath, "Credentials.txt")
+    pPackagesPath = pathlib.Path (pConfigDirPath, "Packages.txt")
 
     if lArgs:
 
         if lArgs[0] in ["-h", "--help"]:
 
-            print ("\nYou must call the script manually the first time. It will give you a Launchpad link, which you need to open in a browser to grant it access (not necessarily on the same system). Select 'Change Anything' for the access level.\n\nCalling the script without arguments will go through all projects on https://salsa.debian.org/ubports-team.\nCalling the script with a project argument will process only that particular project.\n")
+            print ("\nYou must call the script manually the first time. It will give you a Launchpad link, which you need to open in a browser to grant it access (not necessarily on the same system). Select 'Change Anything' for the access level.\n\nCalling the script without arguments will go through all projects on https://salsa.debian.org/ubports-team, as well as the ~/.config/salsa2lp-sync/Packages.txt file.\nCalling the script with a project argument will process only that particular project.\n")
 
             exit (0)
 
         else:
 
-            lPackages.append (lArgs[0])
+            sFile = pPackagesPath.read_text ()
+            lLines = sFile.splitlines()
+            sTeam = "ubports-team"
+
+            for sLine in lLines:
+
+                sLinePackage, sLineTeam = sLine.split (" ")
+
+                if lArgs[0] == sLinePackage:
+
+                    sTeam = sLineTeam
+
+                    break
+
+            lPackages.append ({"package": lArgs[0], "team": sTeam})
 
     else:
 
@@ -82,16 +104,18 @@ if __name__ == '__main__':
 
         for pProject in lProjects:
 
-            lPackages.append (pProject.name)
+            lPackages.append ({"package": pProject.name, "team": "ubports-team"})
         #~Get all projects from Salsa
 
-    sHome = pathlib.Path.home ()
-    pTempPath = pathlib.Path (sHome, ".cache/salsa2lp-sync")
-    pTempPath.mkdir (parents=True, exist_ok=True)
-    pCredentials = Credentials ("salsa2lp-sync")
-    pCredentialsDirPath = pathlib.Path (sHome, ".config/salsa2lp-sync")
-    pCredentialsDirPath.mkdir (parents=True, exist_ok=True)
-    pCredentialsPath = pathlib.Path (pCredentialsDirPath, "Credentials.txt")
+        # Get all the projects from Packages.txt
+        sFile = pPackagesPath.read_text ()
+        lLines = sFile.splitlines()
+
+        for sLine in lLines:
+
+            sPackage, sTeam = sLine.split (" ")
+            lPackages.append ({"package": sPackage, "team": sTeam})
+        #~Get all the projects from Packages.txt
 
     if pCredentialsPath.is_file ():
 
@@ -126,7 +150,7 @@ if __name__ == '__main__':
     pLaunchpad = Launchpad.login_with ("salsa2lp-sync", "production", credentials_file=pCredentialsPath, version="devel")
     pGroup = pLaunchpad.people["lomiri"]
 
-    for sPackage in lPackages:
+    for dPackage in lPackages:
 
         # Clean up
         cleanUp (pTempPath)
@@ -137,11 +161,11 @@ if __name__ == '__main__':
 
         try:
 
-            Repo.clone_from (f"https://salsa.debian.org/ubports-team/{sPackage}.git", pSalsaPath)
+            Repo.clone_from (f"https://salsa.debian.org/{dPackage['team']}/{dPackage['package']}.git", pSalsaPath)
 
         except:
 
-            print (f"\nPanic: {sPackage} not found on Salsa\n")
+            print (f"\nPanic: {dPackage['package']} not found on Salsa\n")
             exit (1)
         #~Get the Debian folder
 
@@ -155,7 +179,7 @@ if __name__ == '__main__':
 
             if not pDebianFilePath.is_file:
 
-                print (f"\nPanic: {sPackage} is missing 'debian/{pDebianFilePath}'\n")
+                print (f"\nPanic: {dPackage['package']} is missing 'debian/{pDebianFilePath}'\n")
                 bMissing = True
 
         if bMissing:
@@ -168,7 +192,7 @@ if __name__ == '__main__':
 
         except subprocess.CalledProcessError as pException:
 
-            print (f"\nPanic: Failed calling 'uscan' for {sPackage}:\n{pException}\n")
+            print (f"\nPanic: Failed calling 'uscan' for {dPackage['package']}:\n{pException}\n")
 
             continue
         #~Download the tarball
@@ -196,18 +220,18 @@ if __name__ == '__main__':
 
         else:
 
-            print (f"\nPanic: Failed parsing changelog for {sPackage}: {sLine}\n")
+            print (f"\nPanic: Failed parsing changelog for {dPackage['package']}: {sLine}\n")
             exit (1)
         #~Get the package version
 
         # Create a new repository or pull the code from Launchpad
-        pRepository = pLaunchpad.git_repositories.getByPath (path=f"~lomiri/+git/{sPackage}")
+        pRepository = pLaunchpad.git_repositories.getByPath (path=f"~lomiri/+git/{dPackage['package']}")
         bNewRepo = False
 
         if not pRepository:
 
-            print (f"{sPackage}: Creating repository")
-            pRepository = pLaunchpad.git_repositories.new (name=sPackage, owner=pGroup, target=pGroup)
+            print (f"{dPackage['package']}: Creating repository")
+            pRepository = pLaunchpad.git_repositories.new (name=dPackage["package"], owner=pGroup, target=pGroup)
             bNewRepo = True
 
         pNow = datetime.now (timezone.utc)
@@ -215,7 +239,7 @@ if __name__ == '__main__':
         sExpires = pExpires.isoformat ()
         sAccessToken = pRepository.issueAccessToken (description=f"Access token for {pLaunchpad.me.name}", scopes=["repository:push", "repository:pull"], date_expires=sExpires)
         pRepo = Repo.init (pTempPath)
-        pMain = pRepo.create_remote ("main", url=f"https://{pLaunchpad.me.name}:{sAccessToken}@git.launchpad.net/~lomiri/+git/{sPackage}")
+        pMain = pRepo.create_remote ("main", url=f"https://{pLaunchpad.me.name}:{sAccessToken}@git.launchpad.net/~lomiri/+git/{dPackage['package']}")
 
         if not bNewRepo:
 
@@ -268,7 +292,7 @@ if __name__ == '__main__':
         # Push the changes to Launchpad
         if bNewRepo or pRepo.is_dirty ():
 
-            print (f"{sPackage}: Pushing changes to Launchpad")
+            print (f"{dPackage['package']}: Pushing changes to Launchpad")
             pRepo.git.add (A=True)
             pRepo.index.commit ("Synchronised with upstream")
 
@@ -288,25 +312,25 @@ if __name__ == '__main__':
 
             if float (pDistroseries.version) >= 24.04:
 
-                sRecipe = f"{sPackage}-{pDistroseries.version}"
+                sRecipe = f"{dPackage['package']}-{pDistroseries.version}"
                 pRecipe = pGroup.getRecipe (name=sRecipe)
 
                 if not pRecipe:
 
-                    print (f"{sPackage}: Creating build recipe {sRecipe}")
-                    pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {sPackage}", distroseries=pDistroseries, name=sRecipe, recipe_text="# git-build-recipe format 0.4 deb-version {debversion}-{revtime}\nlp:~lomiri/+git/" + sPackage + " main")
+                    print (f"{dPackage['package']}: Creating build recipe {sRecipe}")
+                    pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {dPackage['package']}", distroseries=pDistroseries, name=sRecipe, recipe_text="# git-build-recipe format 0.4 deb-version {debversion}-{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main")
         #~Create build recipes (multiple distro series)
         """
 
         # Create build recipe (one distro series)
-        pRecipe = pGroup.getRecipe (name=sPackage)
+        pRecipe = pGroup.getRecipe (name=dPackage["package"])
 
         if not pRecipe:
 
-            print (f"{sPackage}: Creating build recipe")
+            print (f"{dPackage['package']}: Creating build recipe")
             pArchive = pGroup.getPPAByName (name="builds")
             pDistroseries = pLaunchpad.distributions["ubuntu"].getSeries (name_or_version="24.04")
-            pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {sPackage}", distroseries=pDistroseries, name=sPackage, recipe_text="# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + sPackage + " main")
+            pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {dPackage['package']}", distroseries=pDistroseries, name=dPackage["package"], recipe_text="# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main")
         #~Create build recipe (one distro series)
 
     # Clean up

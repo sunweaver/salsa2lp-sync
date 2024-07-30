@@ -22,7 +22,8 @@ the access level.
 Your credentials will be stored in `~/.config/salsa2lp-sync/Credentials.txt`.
 
 Calling the script without arguments will go through all projects on
-https://salsa.debian.org/ubports-team.
+https://salsa.debian.org/ubports-team, as well as the
+`~/.config/salsa2lp-sync/Packages.txt` file.
 
 Calling the script with a project argument will process only that
 particular project. For example:

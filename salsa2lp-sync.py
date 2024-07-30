@@ -214,6 +214,7 @@ if __name__ == '__main__':
             sVersion = pMatch.group ("version")
             sDistribution = pMatch.group ("distribution")
 
+            """
             if sDistribution == "UNRELEASED":
 
                 sVersion += "~"
@@ -221,6 +222,9 @@ if __name__ == '__main__':
             else:
 
                 sVersion += "+"
+            """
+
+            sVersion += "~"
 
         else:
 

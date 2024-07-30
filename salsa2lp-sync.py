@@ -43,17 +43,19 @@ def onSignal (pSignal, pFrame):
     print ("\nAborting...\n")
     sys.exit (0)
 
-def cleanUp (pPath):
+def cleanUp (pPath, lExclude):
 
     for pChild in pPath.iterdir ():
 
-        if pChild.is_dir ():
+        if pChild not in lExclude:
 
-            shutil.rmtree (pChild)
+            if pChild.is_dir ():
 
-        else:
+                shutil.rmtree (pChild)
 
-            pChild.unlink ()
+            else:
+
+                pChild.unlink ()
 
 if __name__ == '__main__':
 
@@ -153,7 +155,7 @@ if __name__ == '__main__':
     for dPackage in lPackages:
 
         # Clean up
-        cleanUp (pTempPath)
+        cleanUp (pTempPath, [])
         #~Clean up
 
         # Get the Debian folder
@@ -195,6 +197,8 @@ if __name__ == '__main__':
             print (f"\nPanic: Failed calling 'uscan' for {dPackage['package']}:\n{pException}\n")
 
             continue
+
+        cleanUp (pTempPath, [pSalsaPath])
         #~Download the tarball
 
         # Get the package version
@@ -250,6 +254,8 @@ if __name__ == '__main__':
         #~Create a new repository or pull the code from Launchpad
 
         # Extract the tarball
+        pGitPath = pathlib.Path (pTempPath, ".git")
+        cleanUp (pTempPath, [pGitPath, pSalsaPath])
         lSuffixes = ["xz", "bz2", "gz"]
         sCompression = None
         sTarPath = None
@@ -285,7 +291,7 @@ if __name__ == '__main__':
         #~Extract the tarball
 
         # Remove the Salsa folder
-        cleanUp (pSalsaPath)
+        cleanUp (pSalsaPath, [])
         pSalsaPath.rmdir ()
         #~Remove the Salsa folder
 
@@ -334,7 +340,7 @@ if __name__ == '__main__':
         #~Create build recipe (one distro series)
 
     # Clean up
-    cleanUp (pTempPath)
+    cleanUp (pTempPath, [])
     #~Clean up
 
     sys.exit (0)

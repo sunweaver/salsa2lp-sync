@@ -10,7 +10,8 @@
 ## Setup
 
  - Can only be run on a Debian-based system
- - Copy `salsa2lp-sync.py` to a location of your choice
+ - Save `salsa2lp-sync.py` to a location of your choice
+ - Save `Packages.txt` to `~/.config/salsa2lp-sync/Packages.txt`
 
 ## Usage
 

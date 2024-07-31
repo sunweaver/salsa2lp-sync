@@ -285,7 +285,11 @@ if __name__ == '__main__':
                 pMemberPath = pathlib.Path (pMember.name)
                 pMember.name = pMemberPath.relative_to (pToplevelPath)
 
-                if pMember.name == "debian" or (pMember.name.parts and pMember.name.parts[0] == "debian"):
+                if str (pMember.name) == "debian" or (pMember.name.parts and pMember.name.parts[0] == "debian"):
+
+                    continue
+
+                if str (pMember.name) == ".gitignore":
 
                     continue
 

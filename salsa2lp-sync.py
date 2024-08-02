@@ -190,7 +190,7 @@ if __name__ == '__main__':
 
         try:
 
-            subprocess.run ("uscan --noconf --rename --download-current-version --destdir=. 1> /dev/null", shell=True, cwd=pSalsaPath, check=True)
+            subprocess.run (["uscan", "--noconf", "--rename", "--download-current-version", "--destdir=."], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, cwd=pSalsaPath, check=True)
 
         except subprocess.CalledProcessError as pException:
 

@@ -19,3 +19,4 @@ wlcs mir-server-team
 qtfeedback qt-kde-team/qt
 qtpim qt-kde-team/qt
 qtsystems qt-kde-team/qt
+libaccounts-qt qt-kde-team/3rdparty

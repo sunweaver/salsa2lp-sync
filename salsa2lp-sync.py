@@ -179,9 +179,9 @@ if __name__ == '__main__':
 
             pDebianFilePath = pathlib.Path (pSalsaPath, "debian", sDebianFile)
 
-            if not pDebianFilePath.is_file:
+            if not pDebianFilePath.is_file ():
 
-                print (f"\nPanic: {dPackage['package']} is missing 'debian/{pDebianFilePath}'\n")
+                print (f"\nPanic: {dPackage['package']} is missing 'debian/{sDebianFile}'\n")
                 bMissing = True
 
         if bMissing:

@@ -31,7 +31,6 @@ from lazr.restfulclient.errors import HTTPError
 from time import sleep
 import gitlab
 import pathlib
-import re
 import shutil
 import subprocess
 import signal
@@ -191,7 +190,7 @@ if __name__ == '__main__':
             continue
         #~Check for missing debian content
 
-        # Check package format
+        # Get the package format
         bNative = False
 
         try:
@@ -205,7 +204,47 @@ if __name__ == '__main__':
             print (f"\nPanic: Failed getting package format for {dPackage['package']}:\n{pException}\n")
 
             continue
-        #~Check package format
+        #~Get the package format
+
+        # Get the package version
+        sVersion = None
+
+        try:
+
+            pSubprocess = subprocess.run (["dpkg-parsechangelog", "--show-field", "Version"], cwd=pSalsaPath, check=True, capture_output=True, text=True)
+            sVersion = pSubprocess.stdout.strip ()
+
+        except subprocess.CalledProcessError as pException:
+
+            print (f"\nPanic: Failed getting package version for {dPackage['package']}:\n{pException}\n")
+
+            continue
+
+        sDistribution = None
+
+        try:
+
+            pSubprocess = subprocess.run (["dpkg-parsechangelog", "--show-field", "Distribution"], cwd=pSalsaPath, check=True, capture_output=True, text=True)
+            sDistribution = pSubprocess.stdout.strip ()
+
+        except subprocess.CalledProcessError as pException:
+
+            print (f"\nPanic: Failed getting package distribution for {dPackage['package']}:\n{pException}\n")
+
+            continue
+
+        """
+        if sDistribution == "UNRELEASED":
+
+            sVersion += "~"
+
+        else:
+
+            sVersion += "+"
+        """
+
+        sVersion += "~"
+        #~Get the package version
 
         # Download the tarball
         if not bNative:
@@ -222,38 +261,6 @@ if __name__ == '__main__':
 
             cleanUp (pTempPath, [pSalsaPath])
         #~Download the tarball
-
-        # Get the package version
-        pChangelogPath = pathlib.Path (pSalsaPath, "debian/changelog")
-        sVersion = None
-        pFile = pChangelogPath.open ()
-        sLine = pFile.readline ()
-        pFile.close ()
-        pMatch = re.search (r"^[a-zA-Z0-9\-]+ \((?P<version>[a-zA-Z0-9_\~\+\-\.]+)\) (?P<distribution>unstable|UNRELEASED);", sLine)
-
-        if (pMatch):
-
-            sVersion = pMatch.group ("version")
-            sDistribution = pMatch.group ("distribution")
-
-            """
-            if sDistribution == "UNRELEASED":
-
-                sVersion += "~"
-
-            else:
-
-                sVersion += "+"
-            """
-
-            sVersion += "~"
-
-        else:
-
-            print (f"\nPanic: Failed parsing changelog for {dPackage['package']}: {sLine}\n")
-
-            continue
-        #~Get the package version
 
         # Create a new repository or pull the code from Launchpad
         pRepository = pLaunchpad.git_repositories.getByPath (path=f"~lomiri/+git/{dPackage['package']}")

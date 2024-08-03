@@ -289,7 +289,9 @@ if __name__ == '__main__':
 
                     continue
 
-                if str (pMember.name) == ".gitignore":
+                bGitIgnore = str (pMember.name).endswith (".gitignore")
+
+                if bGitIgnore:
 
                     continue
 

@@ -168,10 +168,12 @@ if __name__ == '__main__':
         except:
 
             print (f"\nPanic: {dPackage['package']} not found on Salsa\n")
-            exit (1)
+
+            continue
         #~Get the Debian folder
 
-        # Download the tarball
+
+        # Check for missing debian content
         lDebianFiles = ["rules", "changelog", "control"]
         bMissing = False
 
@@ -187,18 +189,38 @@ if __name__ == '__main__':
         if bMissing:
 
             continue
+        #~Check for missing debian content
+
+        # Check package format
+        bNative = False
 
         try:
 
-            subprocess.run (["uscan", "--noconf", "--rename", "--download-current-version", "--destdir=."], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, cwd=pSalsaPath, check=True)
+            pSubprocess = subprocess.run (["dpkg-source", "--print-format", pSalsaPath], check=True, capture_output=True, text=True)
+            sFormat = pSubprocess.stdout.strip ()
+            bNative = (sFormat == "3.0 (native)")
 
         except subprocess.CalledProcessError as pException:
 
-            print (f"\nPanic: Failed calling 'uscan' for {dPackage['package']}:\n{pException}\n")
+            print (f"\nPanic: Failed getting package format for {dPackage['package']}:\n{pException}\n")
 
             continue
+        #~Check package format
 
-        cleanUp (pTempPath, [pSalsaPath])
+        # Download the tarball
+        if not bNative:
+
+            try:
+
+                subprocess.run (["uscan", "--noconf", "--rename", "--download-current-version", "--destdir=."], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, cwd=pSalsaPath, check=True)
+
+            except subprocess.CalledProcessError as pException:
+
+                print (f"\nPanic: Failed calling 'uscan' for {dPackage['package']}:\n{pException}\n")
+
+                continue
+
+            cleanUp (pTempPath, [pSalsaPath])
         #~Download the tarball
 
         # Get the package version
@@ -229,7 +251,8 @@ if __name__ == '__main__':
         else:
 
             print (f"\nPanic: Failed parsing changelog for {dPackage['package']}: {sLine}\n")
-            exit (1)
+
+            continue
         #~Get the package version
 
         # Create a new repository or pull the code from Launchpad
@@ -257,60 +280,78 @@ if __name__ == '__main__':
             pMain.pull ("main:main")
         #~Create a new repository or pull the code from Launchpad
 
-        # Extract the tarball
+        # Remove current source tree
         pGitPath = pathlib.Path (pTempPath, ".git")
         cleanUp (pTempPath, [pGitPath, pSalsaPath])
-        lSuffixes = ["xz", "bz2", "gz"]
-        sCompression = None
-        sTarPath = None
+        #~Remove current source tree
 
-        for sSuffix in lSuffixes:
+        # Extract the tarball
+        if not bNative:
 
-            lTarPaths = list (pSalsaPath.glob (f"*.tar.{sSuffix}"))
+            lSuffixes = ["xz", "bz2", "gz"]
+            sCompression = None
+            sTarPath = None
 
-            if lTarPaths:
+            for sSuffix in lSuffixes:
 
-                sTarPath = lTarPaths[0]
-                sCompression = sSuffix
+                lTarPaths = list (pSalsaPath.glob (f"*.tar.{sSuffix}"))
 
-                break
+                if lTarPaths:
 
-        with tarfile.open (sTarPath, f"r:{sCompression}") as pTarFile:
+                    sTarPath = lTarPaths[0]
+                    sCompression = sSuffix
 
-            lMembers = pTarFile.getmembers ()
-            pToplevelPath = pathlib.Path (lMembers[0].name).parts[0]
+                    break
 
-            for pMember in lMembers:
+            with tarfile.open (sTarPath, f"r:{sCompression}") as pTarFile:
 
-                pMemberPath = pathlib.Path (pMember.name)
-                pMember.name = pMemberPath.relative_to (pToplevelPath)
+                lMembers = pTarFile.getmembers ()
+                pToplevelPath = pathlib.Path (lMembers[0].name).parts[0]
 
-                if str (pMember.name) == "debian" or (pMember.name.parts and pMember.name.parts[0] == "debian"):
+                for pMember in lMembers:
 
-                    continue
+                    pMemberPath = pathlib.Path (pMember.name)
+                    pMember.name = pMemberPath.relative_to (pToplevelPath)
 
-                bGitIgnore = str (pMember.name).endswith (".gitignore")
+                    if str (pMember.name) == "debian" or (pMember.name.parts and pMember.name.parts[0] == "debian"):
 
-                if bGitIgnore:
+                        continue
 
-                    continue
+                    bGitIgnore = str (pMember.name).endswith (".gitignore")
 
-                if sys.version_info >= (3, 12):
+                    if bGitIgnore:
 
-                    pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
+                        continue
 
-                else:
+                    if sys.version_info >= (3, 12):
 
-                    pTarFile.extract (pMember, pTempPath)
+                        pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
+
+                    else:
+
+                        pTarFile.extract (pMember, pTempPath)
         #~Extract the tarball
 
-        # Move debian and remove the Salsa folder
-        pOldDebianPath = pathlib.Path (pSalsaPath, "debian")
-        pNewDebianPath = pathlib.Path (pTempPath, "debian")
-        pOldDebianPath.rename (pNewDebianPath)
+        # Move files and delete the Salsa folder
+        if not bNative:
+
+            pOldPath = pathlib.Path (pSalsaPath, "debian")
+            pNewPath = pathlib.Path (pTempPath, "debian")
+            pOldPath.rename (pNewPath)
+
+        else:
+
+            for pChild in pSalsaPath.iterdir ():
+
+                if pChild.name != ".git":
+
+                    pOldPath = pathlib.Path (pSalsaPath, pChild.name)
+                    pNewPath = pathlib.Path (pTempPath, pChild.name)
+                    pOldPath.rename (pNewPath)
+
         cleanUp (pSalsaPath, [])
         pSalsaPath.rmdir ()
-        #~Move debian and remove the Salsa folder
+        #~Move files and delete the Salsa folder
 
         # Push the changes to Launchpad
         if bNewRepo or pRepo.is_dirty ():

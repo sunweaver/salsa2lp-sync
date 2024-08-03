@@ -32,8 +32,3 @@ particular project. For example:
 ```
 ./salsa2lp-sync.py lomiri-api
 ```
-
-## Misc
-
-There is no error handling at this stage. We want the script to crash
-spectacularly to get as much error info as possible.

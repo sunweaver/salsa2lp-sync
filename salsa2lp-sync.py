@@ -376,7 +376,7 @@ if __name__ == '__main__':
         #~Push the changes to Launchpad
 
         """
-        # Create build recipes (multiple distro series)
+        # Create/update build recipes (multiple distro series)
         pArchive = pGroup.getPPAByName (name="builds")
 
         for pDistroseries in pLaunchpad.distributions["ubuntu"].series:
@@ -385,24 +385,46 @@ if __name__ == '__main__':
 
                 sRecipe = f"{dPackage['package']}-{pDistroseries.version}"
                 pRecipe = pGroup.getRecipe (name=sRecipe)
+                sRecipeText = "# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
 
                 if not pRecipe:
 
                     print (f"{dPackage['package']}: Creating build recipe {sRecipe}")
-                    pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {dPackage['package']}", distroseries=pDistroseries, name=sRecipe, recipe_text="# git-build-recipe format 0.4 deb-version {debversion}-{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main")
-        #~Create build recipes (multiple distro series)
+                    pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {dPackage['package']}", distroseries=pDistroseries, name=sRecipe, recipe_text=sRecipeText)
+
+                else:
+
+                    sCurrentRecipeText = pRecipe.recipe_text.strip ()
+
+                    if sCurrentRecipeText != sRecipeText:
+
+                        print (f"{dPackage['package']}: Updating build recipe {sRecipe}")
+                        pRecipe.recipe_text = "# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
+                        pRecipe.lp_save ()
+        #~Create/update build recipes (multiple distro series)
         """
 
-        # Create build recipe (one distro series)
+        # Create/update the build recipe (one distro series)
         pRecipe = pGroup.getRecipe (name=dPackage["package"])
+        sRecipeText = "# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
 
         if not pRecipe:
 
-            print (f"{dPackage['package']}: Creating build recipe")
+            print (f"{dPackage['package']}: Creating the build recipe")
             pArchive = pGroup.getPPAByName (name="builds")
             pDistroseries = pLaunchpad.distributions["ubuntu"].getSeries (name_or_version="24.04")
-            pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {dPackage['package']}", distroseries=pDistroseries, name=dPackage["package"], recipe_text="# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main")
-        #~Create build recipe (one distro series)
+            pGroup.createRecipe (build_daily=True, daily_build_archive=pArchive, description=f"Daily build of {dPackage['package']}", distroseries=pDistroseries, name=dPackage["package"], recipe_text=sRecipeText)
+
+        else:
+
+            sCurrentRecipeText = pRecipe.recipe_text.strip ()
+
+            if sCurrentRecipeText != sRecipeText:
+
+                print (f"{dPackage['package']}: Updating the build recipe")
+                pRecipe.recipe_text = sRecipeText
+                pRecipe.lp_save ()
+        #~Create/update the build recipe (one distro series)
 
     # Clean up
     cleanUp (pTempPath, [])

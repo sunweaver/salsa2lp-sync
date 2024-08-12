@@ -1,4 +1,4 @@
-# LomiriForUbuntu.py
+# salsa2lp-sync
 
 ## Dependecies
 

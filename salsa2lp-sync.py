@@ -219,32 +219,30 @@ if __name__ == '__main__':
             print (f"\nPanic: Failed getting package version for {dPackage['package']}:\n{pException}\n")
 
             continue
+        #~Get the package version
 
         sDistribution = None
 
+        # Get the package distribution
         try:
 
             pSubprocess = subprocess.run (["dpkg-parsechangelog", "--show-field", "Distribution"], cwd=pSalsaPath, check=True, capture_output=True, text=True)
             sDistribution = pSubprocess.stdout.strip ()
+
+            if sDistribution == "UNRELEASED":
+
+                sDistribution = "pre-release"
+
+            else:
+
+                sDistribution = "release"
 
         except subprocess.CalledProcessError as pException:
 
             print (f"\nPanic: Failed getting package distribution for {dPackage['package']}:\n{pException}\n")
 
             continue
-
-        """
-        if sDistribution == "UNRELEASED":
-
-            sVersion += "~"
-
-        else:
-
-            sVersion += "+"
-        """
-
-        sVersion += "~"
-        #~Get the package version
+        #~Get the package distribution
 
         # Download the tarball
         if not bNative:
@@ -339,6 +337,11 @@ if __name__ == '__main__':
                         pTarFile.extract (pMember, pTempPath)
         #~Extract the tarball
 
+        # Get the last commit
+        pSalsaRepo = Repo.init (pSalsaPath)
+        sCommit = pSalsaRepo.head.commit.hexsha
+        #~Get the last commit
+
         # Move files and delete the Salsa folder
         if not bNative:
 
@@ -365,7 +368,7 @@ if __name__ == '__main__':
 
             print (f"{dPackage['package']}: Pushing changes to Launchpad")
             pRepo.git.add (A=True)
-            pRepo.index.commit ("Synchronised with upstream")
+            pRepo.index.commit (f"Update from salsa.debian.org: {dPackage['package']} {sDistribution} {sVersion} (commit: {sCommit})")
 
             if bNewRepo:
 
@@ -385,7 +388,7 @@ if __name__ == '__main__':
 
                 sRecipe = f"{dPackage['package']}-{pDistroseries.version}"
                 pRecipe = pGroup.getRecipe (name=sRecipe)
-                sRecipeText = "# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
+                sRecipeText = "# git-build-recipe format 0.4 deb-version " + sVersion + "~{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
 
                 if not pRecipe:
 
@@ -399,14 +402,14 @@ if __name__ == '__main__':
                     if sCurrentRecipeText != sRecipeText:
 
                         print (f"{dPackage['package']}: Updating build recipe {sRecipe}")
-                        pRecipe.recipe_text = "# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
+                        pRecipe.recipe_text = "# git-build-recipe format 0.4 deb-version " + sVersion + "~{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
                         pRecipe.lp_save ()
         #~Create/update build recipes (multiple distro series)
         """
 
         # Create/update the build recipe (one distro series)
         pRecipe = pGroup.getRecipe (name=dPackage["package"])
-        sRecipeText = "# git-build-recipe format 0.4 deb-version " + sVersion + "{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
+        sRecipeText = "# git-build-recipe format 0.4 deb-version " + sVersion + "~{revtime}\nlp:~lomiri/+git/" + dPackage["package"] + " main"
 
         if not pRecipe:
 

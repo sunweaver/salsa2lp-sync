@@ -31,11 +31,11 @@ Show the help message and exit
 
 -t TEAM, --team TEAM
 
-The Launchpad team whose PPA the projects are to be synchronised to
+The Launchpad team whose PPA the projects are to be synchronised to (defaults to "lomiri")
 
 -p PPA, --ppa PPA
 
-The Launchpad PPA the projects are to be synchronised to
+The Launchpad PPA the projects are to be synchronised to (defaults to "builds")
 
 ---
 

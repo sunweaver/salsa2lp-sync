@@ -361,7 +361,7 @@ if __name__ == '__main__':
         #~Move files and delete the Salsa folder
 
         # Push the changes to Launchpad
-        if bNewRepo or pRepo.is_dirty ():
+        if bNewRepo or pRepo.is_dirty (untracked_files=True):
 
             print (f"{dPackage['package']}: Pushing changes to Launchpad")
             pRepo.git.add (A=True)

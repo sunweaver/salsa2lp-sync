@@ -364,7 +364,7 @@ if __name__ == '__main__':
         if bNewRepo or pRepo.is_dirty (untracked_files=True):
 
             print (f"{dPackage['package']}: Pushing changes to Launchpad")
-            pRepo.git.add (A=True)
+            pRepo.git.add ("-A", "--force")
             pRepo.index.commit (f"Update from salsa.debian.org: {dPackage['package']} {sDistribution} {sVersion} (commit: {sCommit})")
 
             if bNewRepo:

@@ -163,6 +163,8 @@ if __name__ == '__main__':
         # Get the Debian folder
         pSalsaPath = pathlib.Path (pTempPath, "salsa")
 
+        # FIXME: Handle gbp-managed packages gracefully here, too...
+
         try:
 
             Repo.clone_from (f"https://salsa.debian.org/{dPackage['team']}/{dPackage['package']}.git", pSalsaPath)
@@ -252,6 +254,7 @@ if __name__ == '__main__':
 
             try:
 
+                # FIXME: prefer debian/rules get-orig-source, if present
                 subprocess.run (["uscan", "--noconf", "--rename", "--download-current-version", "--destdir=."], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, cwd=pSalsaPath, check=True)
 
             except subprocess.CalledProcessError as pException:

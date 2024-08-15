@@ -160,7 +160,7 @@ if __name__ == '__main__':
         cleanUp (pTempPath, [])
         #~Clean up
 
-        # Get the Debian folder
+        # Get the debian/ folder
         pSalsaPath = pathlib.Path (pTempPath, "salsa")
 
         # FIXME: Handle gbp-managed packages gracefully here, too...

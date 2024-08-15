@@ -31,6 +31,7 @@ from lazr.restfulclient.errors import HTTPError
 from time import sleep
 import argparse
 import gitlab
+import logging
 import pathlib
 import shutil
 import subprocess
@@ -73,8 +74,12 @@ if __name__ == '__main__':
     pParser = argparse.ArgumentParser (description="Synchronise projects from Salsa to Launchpad", epilog="You must call the script manually the first time. It will give you a Launchpad link, which you need to open in a browser to grant it access (not necessarily on the same system). Select 'Change Anything' for the access level.\n\nCalling the script without a project argument will go through all projects on https://salsa.debian.org/ubports-team, as well as the ~/.config/salsa2lp-sync/Packages.txt file.\n\nCalling the script with a project argument will process only that particular project.")
     pParser.add_argument ("-t", "--team", default="lomiri", help="The Launchpad team whose PPA the projects are to be synchronised to (defaults to \"lomiri\")")
     pParser.add_argument ("-p", "--ppa", default="builds", help="The Launchpad PPA the projects are to be synchronised to (defaults to \"builds\")")
+    pParser.add_argument ("-v", "--verbose", action="store_true", help="Be more verbose (unset by default)")
     pParser.add_argument ("project", metavar="PROJECT", nargs='?', help="The project to be synchronised")
     pArgs = pParser.parse_args ()
+
+    if pArgs.verbose:
+        logging.basicConfig(level=logging.INFO)
 
     if pArgs.project:
 

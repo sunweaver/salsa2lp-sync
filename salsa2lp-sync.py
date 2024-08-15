@@ -325,12 +325,6 @@ if __name__ == '__main__':
 
                         continue
 
-                    bGitIgnore = str (pMember.name).endswith (".gitignore")
-
-                    if bGitIgnore:
-
-                        continue
-
                     if sys.version_info >= (3, 12):
 
                         pTarFile.extract (pMember, pTempPath, filter="fully_trusted")

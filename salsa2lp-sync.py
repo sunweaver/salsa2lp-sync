@@ -202,7 +202,7 @@ if __name__ == '__main__':
 
             pSubprocess = subprocess.run (["dpkg-source", "--print-format", pSalsaPath], check=True, capture_output=True, text=True)
             sFormat = pSubprocess.stdout.strip ()
-            bNative = (sFormat == "3.0 (native)")
+            bNative = sFormat in ("1.0", "3.0 (native)")
 
         except subprocess.CalledProcessError as pException:
 

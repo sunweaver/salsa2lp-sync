@@ -21,6 +21,9 @@
 #
 #
 
+import os
+os.environ["GIT_PYTHON_TRACE"] = "full"
+
 from datetime import datetime, timedelta, timezone
 from git import Repo
 from launchpadlib.credentials import AccessToken

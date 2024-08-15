@@ -29,6 +29,10 @@ The project to be synchronised
 
 Show the help message and exit
 
+-v, --verbose
+
+Be more verbose (unset by default)
+
 -t TEAM, --team TEAM
 
 The Launchpad team whose PPA the projects are to be synchronised to (defaults to "lomiri")

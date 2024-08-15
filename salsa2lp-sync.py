@@ -31,6 +31,7 @@ from lazr.restfulclient.errors import HTTPError
 from time import sleep
 import argparse
 import gitlab
+import logging
 import pathlib
 import shutil
 import subprocess
@@ -73,8 +74,12 @@ if __name__ == '__main__':
     pParser = argparse.ArgumentParser (description="Synchronise projects from Salsa to Launchpad", epilog="You must call the script manually the first time. It will give you a Launchpad link, which you need to open in a browser to grant it access (not necessarily on the same system). Select 'Change Anything' for the access level.\n\nCalling the script without a project argument will go through all projects on https://salsa.debian.org/ubports-team, as well as the ~/.config/salsa2lp-sync/Packages.txt file.\n\nCalling the script with a project argument will process only that particular project.")
     pParser.add_argument ("-t", "--team", default="lomiri", help="The Launchpad team whose PPA the projects are to be synchronised to (defaults to \"lomiri\")")
     pParser.add_argument ("-p", "--ppa", default="builds", help="The Launchpad PPA the projects are to be synchronised to (defaults to \"builds\")")
+    pParser.add_argument ("-v", "--verbose", action="store_true", help="Be more verbose (unset by default)")
     pParser.add_argument ("project", metavar="PROJECT", nargs='?', help="The project to be synchronised")
     pArgs = pParser.parse_args ()
+
+    if pArgs.verbose:
+        logging.basicConfig(level=logging.INFO)
 
     if pArgs.project:
 
@@ -155,8 +160,10 @@ if __name__ == '__main__':
         cleanUp (pTempPath, [])
         #~Clean up
 
-        # Get the Debian folder
+        # Get the debian/ folder
         pSalsaPath = pathlib.Path (pTempPath, "salsa")
+
+        # FIXME: Handle gbp-managed packages gracefully here, too...
 
         try:
 
@@ -195,7 +202,7 @@ if __name__ == '__main__':
 
             pSubprocess = subprocess.run (["dpkg-source", "--print-format", pSalsaPath], check=True, capture_output=True, text=True)
             sFormat = pSubprocess.stdout.strip ()
-            bNative = (sFormat == "3.0 (native)")
+            bNative = sFormat in ("1.0", "3.0 (native)")
 
         except subprocess.CalledProcessError as pException:
 
@@ -247,6 +254,7 @@ if __name__ == '__main__':
 
             try:
 
+                # FIXME: prefer debian/rules get-orig-source, if present
                 subprocess.run (["uscan", "--noconf", "--rename", "--download-current-version", "--destdir=."], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, cwd=pSalsaPath, check=True)
 
             except subprocess.CalledProcessError as pException:
@@ -320,12 +328,6 @@ if __name__ == '__main__':
 
                         continue
 
-                    bGitIgnore = str (pMember.name).endswith (".gitignore")
-
-                    if bGitIgnore:
-
-                        continue
-
                     if sys.version_info >= (3, 12):
 
                         pTarFile.extract (pMember, pTempPath, filter="fully_trusted")
@@ -362,10 +364,10 @@ if __name__ == '__main__':
         #~Move files and delete the Salsa folder
 
         # Push the changes to Launchpad
-        if bNewRepo or pRepo.is_dirty ():
+        if bNewRepo or pRepo.is_dirty (untracked_files=True):
 
             print (f"{dPackage['package']}: Pushing changes to Launchpad")
-            pRepo.git.add (A=True)
+            pRepo.git.add ("-A", "--force")
             pRepo.index.commit (f"Update from salsa.debian.org: {dPackage['package']} {sDistribution} {sVersion} (commit: {sCommit})")
 
             if bNewRepo:
